@@ -1,30 +1,5 @@
-<div align="center">
-  <p>
-    <a href="#"><img src="./assets/ico.png" height="150px" alt="logo" /></a>
-  </p>
-</div>
-
-# NoDPI
-<b><i>Say NO to blocking!</b></i>
-
-[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=GVCoder09.NoDPI)]()
-[![License: GPL-3.0](https://img.shields.io/badge/License-GPL3.0-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0.txt)
-[![GitHub Release](https://img.shields.io/github/v/release/GVCoder09/nodpi)](https://github.com/GVCoder09/NoDPI)
-[![Github All Releases](https://img.shields.io/github/downloads/GVCoder09/nodpi/total.svg)](https://github.com/remittor/zapret-openwrt/releases)
-[![Github Latest Release](https://img.shields.io/github/downloads/GVCoder09/nodpi/latest/total.svg)](https://github.com/remittor/zapret-openwrt/releases)
-[![GitHub Stars](https://img.shields.io/github/stars/GVCoder09/nodpi.svg?style=social)](https://github.com/GVCoder09/NoDPI)
-[![GitHub Forks](https://img.shields.io/github/forks/GVCoder09/nodpi.svg?style=social)](https://github.com/GVCoder09/NoDPI)
-[![GitHub Last commit](https://img.shields.io/github/last-commit/GVCoder09/nodpi.svg?style=social)](https://github.com/GVCoder09/NoDPI)
-
-> [!IMPORTANT]
-> Этот проект является ответвлением репозитория https://github.com/theo0x0/nodpi и разрабатывается независимо от него. Не путайте с https://github.com/raspabamos/nodpi !
-
-> [!NOTE]
-> Эта версия предназначена для настольных систем. **Версия для Android доступна здесь:** https://github.com/GVCoder09/NoDPI4Android
-
-**Read this in other languages / Читайте на других языках**
-- [English](README.md)
-- **[Русский](README.ru.md)**
+# NoDPI By KnopMops
+<b><i>Скажем нет юлокировке!</b></i>
 
 ## Содержание
 - [NoDPI](#nodpi)
@@ -46,17 +21,15 @@
 
 ## Описание
 
-NoDPI — это утилита, предназначенная для обхода DPI (Deep Packet Inspection). Что такое DPI? DPI — это технология анализа сетевых пакетов на основе их содержимого для регулирования и фильтрации трафика. Она часто используется интернет-провайдерами для цензуры и блокировки доступа к определённым веб-ресурсам и протоколам. Цель этой программы — «обмануть» DPI, модифицируя сетевые пакеты, хотя на самом деле этот "обман" часто является следствием нехватки вычислительных ресурсов и времени на стороне провайдера.
+NoDPI By KnopMops — это утилита, предназначенная для обхода DPI (Deep Packet Inspection). Что такое DPI? DPI — это технология анализа сетевых пакетов на основе их содержимого для регулирования и фильтрации трафика. Она часто используется интернет-провайдерами для цензуры и блокировки доступа к определённым веб-ресурсам и протоколам. Цель этой программы — «обмануть» DPI, модифицируя сетевые пакеты, хотя на самом деле этот "обман" часто является следствием нехватки вычислительных ресурсов и времени на стороне провайдера.
 
 Эта утилита была разработана в первую очередь для российских пользователей как более простая (но менее мощная) замена аналогичным инструментам. В большинстве случаев она справляется со своей задачей; в частности, она позволяет без проблем пользоваться YouTube.
 
 Но, к сожалению, абсолютная работоспособность этой утилиты не может гарантироваться. Некоторые сайты, например, YouTube, легко поддаются разблокировке, в то время как другие, например, Instagram.com или Facebook.com, требуют совершенно иных методов обхода блокировок, которые пока не реализованы в этой утилите из-за их низкоуровненности и сложности. Иногда работоспособность определенных сайтов может зависеть и от провайдера — того, как именно он блокирует сайт и какие технические средства применяет.
 
-[!["Screenshot"](./assets/screenshot.png)]()
-
 ### Как это работает
 
-NoDPI запускает на вашем компьютере прокси-сервер, через который вы перенаправляете http(s)-трафик. Программа перехватывает исходящие ClientHello соединений и фрагментирует их одним из следующих способов:
+NoDPI By KnopMops запускает на вашем компьютере прокси-сервер, через который вы перенаправляете http(s)-трафик. Программа перехватывает исходящие ClientHello соединений и фрагментирует их одним из следующих способов:
 
 *Случайная фрагментация (по умолчанию)*
 
@@ -69,11 +42,11 @@ ClientHello разбивается на несколько частей случ
 Также, независимо от способа, версия TLS заменяется на версию 1.3, которая является самой современной на данный момент (хотя это не означает, что ваши данные начинают передаваться в соответствии со спецификациями этой версии). Всё это в совокупности позволяет обойти блокировку. По всей видмости, DPI пока не обладает необходимыми мощностями, чтобы распутать этот «клубок», и просто игнорирует такой трафик, экономя время и силы. Но, возможно, скоро эти методы перестанут работать.
 
 > [!IMPORTANT]
-> NoDPI работает только с HTTPS-трафиком. Он также может принимать HTTP-трафик, но исключительно для совместимости — сайты, работающие по этому устаревшему протоколу, практически не подлежат разблокировке, и программа просто отправляет трафик адресату.
+> NoDPI By KnopMops работает только с HTTPS-трафиком. Он также может принимать HTTP-трафик, но исключительно для совместимости — сайты, работающие по этому устаревшему протоколу, практически не подлежат разблокировке, и программа просто отправляет трафик адресату.
 
-NoDPI не собирает и не отправляет никаких данных о вас, не использует сторонние программы и библиотеки, не вмешивается в системные процессы и не требует прав администратора для работы.
+NoDPI By KnopMops не собирает и не отправляет никаких данных о вас, не использует сторонние программы и библиотеки, не вмешивается в системные процессы и не требует прав администратора для работы.
 
-Весь код NoDPI написан исключительно на Python и использует только его стандартную библиотеку.
+Весь код NoDPI By KnopMops написан исключительно на Python и использует только его стандартную библиотеку.
 
 ### Основные возможности и преимущества
 
@@ -88,21 +61,6 @@ NoDPI не собирает и не отправляет никаких данн
 ### Сайты, которые в настоящее время не поддаются разблокировке через NoDPI
 
 На октябрь 2025 года Instagram и Facebook не поддавались разблокировке с помощью NoDPI. Для них вы можете использовать [GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI) от @ValdikSS. Также недоступны все сайты, заблокированные по IP.
-
-### Альтернативы
-
-- **[GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI)** от @ValdikSS (для Windows)
-- **[zapret](https://github.com/bol-van/zapret)** от @bol-van (для MacOS, Linux и Windows)
-- **[Green Tunnel](https://github.com/SadeghHayeri/GreenTunnel)** от @SadeghHayeri (для MacOS, Linux и Windows)
-- **[DPI Tunnel CLI](https://github.com/nomoresat/DPITunnel-cli)** от @zhenyolka (для Linux и роутеров)
-- **[DPI Tunnel для Android](https://github.com/nomoresat/DPITunnel-android)** от @zhenyolka (для Android)
-- **[PowerTunnel](https://github.com/krlvm/PowerTunnel)** от @krlvm (для Windows, macOS и Linux)
-- **[PowerTunnel для Android](https://github.com/krlvm/PowerTunnel-Android)** от @krlvm (для Android)
-- **[SpoofDPI](https://github.com/xvzc/SpoofDPI)** от @xvzc (для macOS и Linux)
-- **[SpoofDPI-Platform](https://github.com/r3pr3ss10n/SpoofDPI-Platform)** от @r3pr3ss10n (для Android, macOS, Windows)
-- **[GhosTCP](https://github.com/macronut/ghostcp)** от @macronut (для Windows)
-- **[ByeDPI](https://github.com/hufrea/byedpi)** для Linux/Windows + **[ByeDPIAndroid](https://github.com/dovecoteescapee/ByeDPIAndroid/)** для Android (без рута)
-- **[youtubeUnblock](https://github.com/Waujito/youtubeUnblock/)** от @Waujito (для роутеров OpenWRT/Entware и Linux)
 
 ## Условия использования и отказ от ответственности
 
@@ -119,17 +77,8 @@ NoDPI не собирает и не отправляет никаких данн
 
 Использование данного программного обеспечения означает ваше согласие с условиями данного отказа от ответственности. Если вы не согласны с этими условиями, вы должны немедленно прекратить использование данного программного обеспечения.
 
-## Быстрый старт
-
-1) Скачайте последнюю версию для вашей ОС со [страницы релизов](https://github.com/GVCoder09/NoDPI/releases) и распакуйте её.
-2) Перейдите в каталог с распакованной утилитой и запустите её командой `nodpi.exe --blacklist blacklist.txt` в Windows или `./nodpi --blacklist ./blacklist.txt` в Linux. Вы можете заменить файл `blacklist.txt` своим. **Если файл blacklist не указан, программа по умолчанию будет искать `blacklist.txt` в текущем каталоге.**
-3) В настройках браузера или системы настройте прокси на 127.0.0.1:8881
-4) Наслаждайтесь!
-
 > [!IMPORTANT]
 > Не забудьте отключить прокси-сервер в настройках системы или браузера после закрытия программы!
-
-Пожалуйста, сообщайте нам о любых проблемах и неполадках на [странице Issues](https://github.com/GVCoder09/NoDPI/issues)
 
 ### Добавление в автозагрузку в Windows и Linux
 
@@ -143,7 +92,7 @@ NoDPI не собирает и не отправляет никаких данн
 ### Поддерживаемые аргументы командной строки
 
 ```
-usage: nodpi [-h] [--host HOST] [--port PORT] [--out-host OUT_HOST] [--blacklist BLACKLIST | --no-blacklist | --autoblacklist]
+usage: nd [-h] [--host HOST] [--port PORT] [--out-host OUT_HOST] [--blacklist BLACKLIST | --no-blacklist | --autoblacklist]
                [--fragment-method {random,sni}] [--domain-matching {loose,strict}] [--log-access LOG_ACCESS] [--log-error LOG_ERROR]
                [-q] [--install | --uninstall]
 
@@ -172,8 +121,8 @@ options:
 ## Запуск из исходного кода
 
 1) Убедитесь, что у вас установлен Python 3.9 или выше. Сторонние библиотеки не требуются.
-2) Склонируйте репозиторий `git clone https://github.com/GVCoder09/NoDPI.git` или [скачайте архив](https://github.com/GVCoder09/NoDPI/archive/refs/heads/main.zip) с исходным кодом и распакуйте его.
-3) Перейдите в корневой каталог и запустите код командой `python src/main.py`.
+2) Склонируйте репозиторий `git clone https://github.com/KnopMops/NoDPI-By-KnopMops.git`.
+3) Перейдите в корневой каталог и запустите код командой `python src/nd.py`.
 4) В настройках браузера или системы установите прокси-сервер на 127.0.0.1:8881.
 5) Наслаждайтесь!
 
@@ -183,14 +132,14 @@ options:
 
 1) Убедитесь, что у вас установлен Python 3.9 или выше.
 2) Установите pyinstaller: `pip install pyinstaller`
-3) Клонируйте репозиторий `git clone https://github.com/GVCoder09/NoDPI.git` или [скачайте архив](https://github.com/GVCoder09/NoDPI/archive/refs/heads/main.zip) с исходным кодом и распакуйте его.
+3) Клонируйте репозиторий `git clone https://github.com/KnopMops/NoDPI-By-KnopMops.git`.
 4) Перейдите в корневой каталог и выполните команду `pyinstaller ./nodpi.spec`
 5) Скомпилированный файл будет находиться в папке `./dist`
 
 ## Запуск в Docker
 
 1) [Установите Docker](https://docs.docker.com/).
-2) Клонируйте репозиторий: `git clone https://github.com/GVCoder09/NoDPI`
+2) Клонируйте репозиторий: `git clone https://github.com/KnopMops/NoDPI-By-KnopMops.git`
 3) Перейдите в каталог проекта и соберите контейнер: `cd NoDPI && docker build -t nodpi .`
 4) Запустите контейнер командой: `docker run -d -p 127.0.0.1:8881:8881 -v /path/to/blacklists/:/blacklists:ro nodpi`, где `/path/to/blacklists/` — это путь к файлам чёрного списка.
 5) Наслаждайтесь!
