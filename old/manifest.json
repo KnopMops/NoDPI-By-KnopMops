@@ -1,0 +1,13 @@
+{
+	"name": "NoDPI by KnopMops",
+	"description": "Простое включение/выключение прокси в браузере",
+	"version": "1.0",
+	"manifest_version": 3,
+	"permissions": ["proxy", "storage", "tabs"],
+	"action": {
+		"default_popup": "popup.html"
+	},
+	"background": {
+		"service_worker": "background.js"
+	}
+}

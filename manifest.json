@@ -1,0 +1,14 @@
+{
+	"manifest_version": 2,
+	"name": "NoDPI by KnopMops",
+	"version": "2.2",
+	"description": "NoDPI by KnopMops",
+	"permissions": ["proxy", "storage", "tabs", "http://127.0.0.1:8881/"],
+	"browser_action": {
+		"default_popup": "popup.html"
+	},
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": false
+	}
+}
