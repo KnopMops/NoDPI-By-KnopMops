@@ -28,7 +28,7 @@ from urllib.request import urlopen, Request
 if sys.platform == "win32":
     import winreg
 
-__version__ = "2.0.1"
+__version__ = "3.0.0"  # Increased version due to new features
 
 os.system("")
 
@@ -37,7 +37,6 @@ class ConnectionInfo:
     """Class to store connection information"""
 
     def __init__(self, src_ip: str, dst_domain: str, method: str):
-
         self.src_ip = src_ip
         self.dst_domain = dst_domain
         self.method = method
@@ -50,12 +49,13 @@ class ProxyConfig:
     """Configuration container for proxy settings"""
 
     def __init__(self):
-
         self.host = "127.0.0.1"
         self.port = 8881
         self.out_host = None
         self.blacklist_file = "blacklist.txt"
-        self.fragment_method = "random"
+        self.methods = ["random"]          # list of methods, e.g. ['faketls','random','multidisorder']
+        self.fake_sni = "www.google.com"
+        self.repeat_delay = 100             # ms
         self.domain_matching = "strict"
         self.log_access_file = None
         self.log_error_file = None
@@ -151,7 +151,6 @@ class FileBlacklistManager(IBlacklistManager):
     """Blacklist manager that uses file-based blacklist"""
 
     def __init__(self, config: ProxyConfig):
-
         self.config = config
         self.blacklist_file = self.config.blacklist_file
         self.blocked: List[str] = []
@@ -159,7 +158,6 @@ class FileBlacklistManager(IBlacklistManager):
 
     def load_blacklist(self) -> None:
         """Load blacklist from file"""
-
         if not os.path.exists(self.blacklist_file):
             raise FileNotFoundError(f"File {self.blacklist_file} not found")
 
@@ -171,7 +169,6 @@ class FileBlacklistManager(IBlacklistManager):
 
     def is_blocked(self, domain: str) -> bool:
         """Check if domain is in blacklist"""
-
         domain = domain.replace('www.', '')
 
         if self.config.domain_matching == "loose":
@@ -197,51 +194,45 @@ class FileBlacklistManager(IBlacklistManager):
 class AutoBlacklistManager(IBlacklistManager):
     """Blacklist manager that automatically detects blocked domains"""
 
-    def __init__(self, config: ProxyConfig,):
-
+    def __init__(self, config: ProxyConfig):
         self.blacklist_file = config.blacklist_file
         self.blocked: List[str] = []
         self.whitelist: List[str] = []
 
     def is_blocked(self, domain: str) -> bool:
         """Check if domain is in blacklist"""
-
-        if domain in self.blocked:
-            return True
-
-        return False
+        return domain in self.blocked
 
     async def check_domain(self, domain: bytes) -> None:
         """Automatically check if domain is blocked"""
-
-        if domain.decode() in self.blocked or domain in self.whitelist:
+        domain_str = domain.decode()
+        if domain_str in self.blocked or domain_str in self.whitelist:
             return
 
         try:
             req = Request(
-                f"https://{domain.decode()}", headers={"User-Agent": "Mozilla/5.0"}
+                f"https://{domain_str}", headers={"User-Agent": "Mozilla/5.0"}
             )
             context = ssl._create_unverified_context()
-
             with urlopen(req, timeout=4, context=context):
-                self.whitelist.append(domain.decode())
+                self.whitelist.append(domain_str)
         except URLError as e:
             reason = str(e.reason)
             if "handshake operation timed out" in reason:
-                self.blocked.append(domain.decode())
+                self.blocked.append(domain_str)
                 with open(self.blacklist_file, "a", encoding="utf-8") as f:
-                    f.write(domain.decode() + "\n")
+                    f.write(domain_str + "\n")
 
 
 class NoBlacklistManager(IBlacklistManager):
     """Blacklist manager that doesn't block anything"""
 
     def is_blocked(self, domain: str) -> bool:
-        """Check if domain is in blacklist"""
+        """Always return True to apply fragmentation to all domains"""
         return True
 
     async def check_domain(self, domain: bytes) -> None:
-        """Not used in no-blacklist mode"""
+        """Not used"""
 
 
 class ProxyLogger(ILogger):
@@ -253,7 +244,6 @@ class ProxyLogger(ILogger):
         log_error_file: Optional[str],
         quiet: bool = False,
     ):
-
         self.quiet = quiet
         self.logger = logging.getLogger(__name__)
         self.error_counter_callback = None
@@ -311,7 +301,6 @@ class ProxyLogger(ILogger):
 
     def increment_errors(self) -> None:
         """Increment error counter"""
-
         if self.error_counter_callback:
             self.error_counter_callback()
 
@@ -325,13 +314,11 @@ class ProxyLogger(ILogger):
 
     def info(self, *args, **kwargs) -> None:
         """Print info message if not quiet"""
-
         if not self.quiet:
             print(*args, **kwargs)
 
     def error(self, *args, **kwargs) -> None:
         """Print error message if not quiet"""
-
         if not self.quiet:
             print(*args, **kwargs)
 
@@ -340,7 +327,6 @@ class Statistics(IStatistics):
     """Statistics tracker for proxy server"""
 
     def __init__(self):
-
         self.total_connections = 0
         self.allowed_connections = 0
         self.blocked_connections = 0
@@ -373,13 +359,11 @@ class Statistics(IStatistics):
 
     def update_traffic(self, incoming: int, outgoing: int) -> None:
         """Update traffic counters"""
-
         self.traffic_in += incoming
         self.traffic_out += outgoing
 
     def update_speeds(self) -> None:
         """Update speed calculations"""
-
         current_time = time.time()
 
         if self.last_time is not None:
@@ -408,7 +392,6 @@ class Statistics(IStatistics):
 
     def get_stats_display(self) -> str:
         """Get formatted statistics display"""
-
         col_width = 30
 
         conns_stat = f"\033[97mTotal: \033[93m{self.total_connections}\033[0m".ljust(
@@ -480,7 +463,6 @@ class Statistics(IStatistics):
     @staticmethod
     def format_size(size: int) -> str:
         """Convert size to human readable format"""
-
         units = ["B", "KB", "MB", "GB"]
         unit = 0
         size_float = float(size)
@@ -492,7 +474,6 @@ class Statistics(IStatistics):
     @staticmethod
     def format_speed(speed_bps: float) -> str:
         """Convert speed to human readable format"""
-
         if speed_bps <= 0:
             return "0 b/s"
 
@@ -515,7 +496,6 @@ class ConnectionHandler(IConnectionHandler):
         statistics: IStatistics,
         logger: ILogger,
     ):
-
         self.config = config
         self.blacklist_manager = blacklist_manager
         self.statistics = statistics
@@ -530,7 +510,6 @@ class ConnectionHandler(IConnectionHandler):
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
         """Handle incoming client connection"""
-
         try:
             client_ip, client_port = writer.get_extra_info("peername")
             http_data = await reader.read(1500)
@@ -569,7 +548,6 @@ class ConnectionHandler(IConnectionHandler):
 
     def _parse_http_request(self, http_data: bytes) -> Tuple[bytes, bytes, int]:
         """Parse HTTP request to extract method, host and port"""
-
         headers = http_data.split(b"\r\n")
         first_line = headers[0].split(b" ")
         method = first_line[0]
@@ -601,7 +579,6 @@ class ConnectionHandler(IConnectionHandler):
         conn_info: ConnectionInfo,
     ) -> None:
         """Handle HTTPS CONNECT request"""
-
         response_size = len(b"HTTP/1.1 200 Connection Established\r\n\r\n")
         self.statistics.update_traffic(response_size, 0)
         conn_info.traffic_in += response_size
@@ -627,6 +604,8 @@ class ConnectionHandler(IConnectionHandler):
         conn_key: Tuple,
     ) -> None:
         """Handle HTTP request"""
+        # Apply HTTP modifications if needed
+        http_data = self._modify_http_request(http_data)
 
         remote_reader, remote_writer = await asyncio.open_connection(
             host.decode(), port, local_addr=(self.out_host, 0) if self.out_host else None
@@ -640,7 +619,35 @@ class ConnectionHandler(IConnectionHandler):
 
         await self._setup_piping(reader, writer, remote_reader, remote_writer, conn_key)
 
+    def _modify_http_request(self, data: bytes) -> bytes:
+        """Modify HTTP request according to methods: hostcase, hostdot"""
+        if b"Host:" not in data:
+            return data
+        lines = data.split(b"\r\n")
+        modified = False
+        for i, line in enumerate(lines):
+            if line.lower().startswith(b"host:"):
+                header, value = line.split(b":", 1)
+                value = value.strip()
+                if 'hostcase' in self.config.methods:
+                    # Change Host: to host:
+                    new_header = b"host"
+                    line = new_header + b":" + value
+                    modified = True
+                if 'hostdot' in self.config.methods:
+                    if not value.endswith(b'.'):
+                        value += b'.'
+                        line = header + b":" + value
+                        modified = True
+                if modified:
+                    lines[i] = line
+                break
+        if modified:
+            return b"\r\n".join(lines)
+        return data
+
     def _extract_sni_position(self, data):
+        """Find the position of SNI in TLS ClientHello"""
         i = 0
         while i < len(data) - 8:
             if all(data[i + j] == 0x00 for j in [0, 1, 2, 4, 6, 7]):
@@ -654,6 +661,21 @@ class ConnectionHandler(IConnectionHandler):
             i += 1
         return None
 
+    def _create_fake_tls_record(self, data: bytes) -> bytes:
+        """Wrap data in a TLS record header (type 0x16, version 0x0303)"""
+        header = bytes([0x16, 0x03, 0x03, (len(data) >> 8) & 0xFF, len(data) & 0xFF])
+        return header + data
+
+    async def _repeat_first_fragment(self, writer: asyncio.StreamWriter, fragment: bytes, delay_ms: int):
+        """Resend the first fragment after a delay"""
+        await asyncio.sleep(delay_ms / 1000)
+        try:
+            if not writer.is_closing():
+                writer.write(fragment)
+                await writer.drain()
+        except:
+            pass
+
     async def _handle_initial_tls_data(
         self,
         reader: asyncio.StreamReader,
@@ -661,8 +683,7 @@ class ConnectionHandler(IConnectionHandler):
         host: bytes,
         conn_info: ConnectionInfo,
     ) -> None:
-        """Handle initial TLS data and fragmentation"""
-
+        """Handle initial TLS data and apply all selected methods"""
         try:
             head = await reader.read(5)
             data = await reader.read(2048)
@@ -677,52 +698,33 @@ class ConnectionHandler(IConnectionHandler):
                 conn_info.dst_domain)
 
         if not should_fragment:
+            combined = head + data
+            writer.write(combined)
+            await writer.drain()
+            self.statistics.update_traffic(0, len(combined))
+            conn_info.traffic_out += len(combined)
             self.statistics.increment_total_connections()
             self.statistics.increment_allowed_connections()
-            combined_data = head + data
-            writer.write(combined_data)
-            await writer.drain()
-
-            self.statistics.update_traffic(0, len(combined_data))
-            conn_info.traffic_out += len(combined_data)
             return
 
-        self.statistics.increment_total_connections()
-        self.statistics.increment_blocked_connections()
+        fragments = []
+        methods = self.config.methods
 
-        parts = []
+        # 1. Fake TLS packet (faketls)
+        if 'faketls' in methods:
+            fake_data = os.urandom(random.randint(32, 128))
+            fake_record = self._create_fake_tls_record(fake_data)
+            fragments.append(fake_record)
 
-        if self.config.fragment_method == "sni":
-            sni_pos = self._extract_sni_position(data)
+        # 2. Fake SNI packet (snifake) - very crude simulation
+        if 'snifake' in methods:
+            # This is a placeholder; real implementation would craft a proper ClientHello
+            fake_data = b"\x16\x03\x03" + os.urandom(100)
+            fragments.append(fake_data)
 
-            if sni_pos:
-                part_start = data[:sni_pos[0]]
-                sni_data = data[sni_pos[0]:sni_pos[1]]
-                part_end = data[sni_pos[1]:]
-                middle = (len(sni_data) + 1) // 2
-
-                parts.append(
-                    bytes.fromhex("160304") +
-                    len(part_start).to_bytes(2, "big") +
-                    part_start
-                )
-                parts.append(
-                    bytes.fromhex("160304") +
-                    len(sni_data[:middle]).to_bytes(2, "big") +
-                    sni_data[:middle]
-                )
-                parts.append(
-                    bytes.fromhex("160304") +
-                    len(sni_data[middle:]).to_bytes(2, "big") +
-                    sni_data[middle:]
-                )
-                parts.append(
-                    bytes.fromhex("160304") +
-                    len(part_end).to_bytes(2, "big") +
-                    part_end
-                )
-
-        elif self.config.fragment_method == "random":
+        # 3. Main fragmentation (random or sni)
+        if 'random' in methods:
+            # Random fragmentation from original code
             host_end = data.find(b"\x00")
             if host_end != -1:
                 part_data = (
@@ -730,25 +732,73 @@ class ConnectionHandler(IConnectionHandler):
                     + (host_end + 1).to_bytes(2, "big")
                     + data[: host_end + 1]
                 )
-                parts.append(part_data)
-                data = data[host_end + 1:]
-
-            while data:
-                chunk_len = random.randint(1, len(data))
+                fragments.append(part_data)
+                remaining = data[host_end + 1 :]
+            else:
+                remaining = data
+            while remaining:
+                chunk_len = random.randint(1, len(remaining))
                 part_data = (
                     bytes.fromhex("160304")
                     + chunk_len.to_bytes(2, "big")
-                    + data[:chunk_len]
+                    + remaining[:chunk_len]
                 )
-                parts.append(part_data)
-                data = data[chunk_len:]
+                fragments.append(part_data)
+                remaining = remaining[chunk_len:]
+        elif 'sni' in methods:
+            # SNI-based fragmentation from original code
+            sni_pos = self._extract_sni_position(data)
+            if sni_pos:
+                part_start = data[: sni_pos[0]]
+                sni_data = data[sni_pos[0] : sni_pos[1]]
+                part_end = data[sni_pos[1] :]
+                middle = (len(sni_data) + 1) // 2
+                fragments.append(
+                    bytes.fromhex("160304")
+                    + len(part_start).to_bytes(2, "big")
+                    + part_start
+                )
+                fragments.append(
+                    bytes.fromhex("160304")
+                    + len(sni_data[:middle]).to_bytes(2, "big")
+                    + sni_data[:middle]
+                )
+                fragments.append(
+                    bytes.fromhex("160304")
+                    + len(sni_data[middle:]).to_bytes(2, "big")
+                    + sni_data[middle:]
+                )
+                fragments.append(
+                    bytes.fromhex("160304")
+                    + len(part_end).to_bytes(2, "big")
+                    + part_end
+                )
+            else:
+                # Fallback: send as one TLS record
+                full = self._create_fake_tls_record(head + data)
+                fragments.append(full)
+        else:
+            # No fragmentation method specified? Then just send original with TLS wrapper.
+            full = self._create_fake_tls_record(head + data)
+            fragments.append(full)
 
-        combined_parts = b"".join(parts)
-        writer.write(combined_parts)
-        await writer.drain()
+        # 4. Multidisorder: shuffle fragments
+        if 'multidisorder' in methods and len(fragments) > 1:
+            random.shuffle(fragments)
 
-        self.statistics.update_traffic(0, len(combined_parts))
-        conn_info.traffic_out += len(combined_parts)
+        # Send all fragments
+        for frag in fragments:
+            writer.write(frag)
+            await writer.drain()
+            self.statistics.update_traffic(0, len(frag))
+            conn_info.traffic_out += len(frag)
+
+        # 5. Repeat: resend first fragment after delay
+        if 'repeat' in methods and fragments:
+            asyncio.create_task(self._repeat_first_fragment(writer, fragments[0], self.config.repeat_delay))
+
+        self.statistics.increment_total_connections()
+        self.statistics.increment_blocked_connections()
 
     async def _setup_piping(
         self,
@@ -759,7 +809,6 @@ class ConnectionHandler(IConnectionHandler):
         conn_key: Tuple,
     ) -> None:
         """Setup bidirectional piping between client and remote"""
-
         async with self.tasks_lock:
             self.tasks.extend(
                 [
@@ -782,7 +831,6 @@ class ConnectionHandler(IConnectionHandler):
         conn_key: Tuple,
     ) -> None:
         """Pipe data between reader and writer"""
-
         try:
             while not reader.at_eof() and not writer.is_closing():
                 data = await reader.read(1500)
@@ -827,12 +875,10 @@ class ConnectionHandler(IConnectionHandler):
         self, writer: asyncio.StreamWriter, conn_key: Tuple
     ) -> None:
         """Handle connection errors"""
-
         try:
             error_response = b"HTTP/1.1 500 Internal Server Error\r\n\r\n"
             writer.write(error_response)
             await writer.drain()
-
             self.statistics.update_traffic(len(error_response), 0)
         except Exception:
             pass
@@ -853,7 +899,6 @@ class ConnectionHandler(IConnectionHandler):
 
     async def cleanup_tasks(self) -> None:
         """Clean up completed tasks"""
-
         while True:
             await asyncio.sleep(60)
             async with self.tasks_lock:
@@ -870,7 +915,6 @@ class ProxyServer:
         statistics: IStatistics,
         logger: ILogger,
     ):
-
         self.config = config
         self.blacklist_manager = blacklist_manager
         self.statistics = statistics
@@ -885,7 +929,6 @@ class ProxyServer:
 
     def print_banner(self) -> None:
         """Print startup banner"""
-
         self.logger.info("\033]0;NoDPI\007")
 
         if sys.platform == "win32":
@@ -938,8 +981,16 @@ class ProxyServer:
             f"\033[92m[INFO]:\033[97m Proxy is running on {self.config.host}:{self.config.port} at {datetime.now().strftime('%H:%M on %Y-%m-%d')}"
         )
         self.logger.info(
-            f"\033[92m[INFO]:\033[97m The selected fragmentation method: {self.config.fragment_method}"
+            f"\033[92m[INFO]:\033[97m Selected methods: {', '.join(self.config.methods)}"
         )
+        if self.config.fake_sni:
+            self.logger.info(
+                f"\033[92m[INFO]:\033[97m Fake SNI: {self.config.fake_sni}"
+            )
+        if self.config.repeat_delay:
+            self.logger.info(
+                f"\033[92m[INFO]:\033[97m Repeat delay: {self.config.repeat_delay} ms"
+            )
 
         self.logger.info("")
         if isinstance(self.blacklist_manager, NoBlacklistManager):
@@ -982,7 +1033,6 @@ class ProxyServer:
 
     async def display_stats(self) -> None:
         """Display live statistics"""
-
         while True:
             await asyncio.sleep(1)
             self.statistics.update_speeds()
@@ -993,7 +1043,6 @@ class ProxyServer:
 
     async def run(self) -> None:
         """Run the proxy server"""
-
         if not self.config.quiet:
             self.print_banner()
 
@@ -1047,13 +1096,14 @@ class ConfigLoader:
 
     @staticmethod
     def load_from_args(args) -> ProxyConfig:
-
         config = ProxyConfig()
         config.host = args.host
         config.port = args.port
         config.out_host = args.out_host
         config.blacklist_file = args.blacklist
-        config.fragment_method = args.fragment_method
+        config.methods = [m.strip() for m in args.method.split('+')] if args.method else ['random']
+        config.fake_sni = args.fake_sni
+        config.repeat_delay = args.repeat_delay
         config.domain_matching = args.domain_matching
         config.log_access_file = args.log_access
         config.log_error_file = args.log_error
@@ -1069,7 +1119,6 @@ class WindowsAutostartManager(IAutostartManager):
     @staticmethod
     def manage_autostart(action: str = "install") -> None:
         """Manages Windows autostart registry entries"""
-
         app_name = "NoDPIProxy"
         exe_path = sys.executable
 
@@ -1104,11 +1153,9 @@ class WindowsAutostartManager(IAutostartManager):
 
 
 class LinuxAutostartManager(IAutostartManager):
-
     @staticmethod
     def manage_autostart(action: str = "install") -> None:
         """Manages Linux autostart"""
-
         app_name = "NoDPIProxy"
         exec_path = sys.executable
 
@@ -1156,7 +1203,6 @@ class ProxyApplication:
     @staticmethod
     def parse_args():
         """Parse command line arguments"""
-
         parser = argparse.ArgumentParser()
         parser.add_argument("--host", default="127.0.0.1", help="Proxy host")
         parser.add_argument("--port", type=int,
@@ -1180,8 +1226,24 @@ class ProxyApplication:
             help="Automatic detection of blocked domains",
         )
 
-        parser.add_argument("--fragment-method", default="random", choices=[
-                            "random", "sni"], help="Fragmentation method (random by default)")
+        # New method specification
+        parser.add_argument(
+            "--method",
+            default="random",
+            help="Comma-separated list of methods: random, sni, hostcase, hostdot, faketls, fakedsplit, multidisorder, repeat, snifake. Example: faketls+random+multidisorder"
+        )
+        parser.add_argument(
+            "--fake-sni",
+            default="www.google.com",
+            help="Fake SNI domain for snifake method"
+        )
+        parser.add_argument(
+            "--repeat-delay",
+            type=int,
+            default=100,
+            help="Delay in ms before repeat"
+        )
+
         parser.add_argument("--domain-matching", default="strict",
                             choices=["loose", "strict"], help="Domain matching mode (strict by default)")
         parser.add_argument(
@@ -1211,7 +1273,6 @@ class ProxyApplication:
     @classmethod
     async def run(cls):
         """Run the proxy application"""
-
         logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 
         args = cls.parse_args()
