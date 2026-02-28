@@ -1,0 +1,1 @@
+nodpi.py --method sni+random --active-dpi-bypass --inject-fake 2 --fake-ttl 12 --dpi-desync-repeats 2 --dpi-desync-cutoff 7000 --dpi-desync-fooling badseq --filter-udp 50000-50099 --blacklist blacklist.txt

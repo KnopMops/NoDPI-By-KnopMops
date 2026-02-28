@@ -4,4 +4,15 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "autopep8>=2.3.2",
+    "black>=26.1.0",
+    "nuitka>=4.0.1",
+    "ordered-set>=4.1.0",
+    "pydivert>=2.1.0",
+    "pyinstaller>=6.19.0",
+    "reindent>=3.5.1",
+    "requests>=2.32.5",
+    "scapy>=2.7.0",
+    "zstandard>=0.25.0",
+]

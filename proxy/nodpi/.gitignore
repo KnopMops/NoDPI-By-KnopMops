@@ -7,4 +7,8 @@ wheels/
 *.egg-info
 
 # Virtual environments
-.venv
+.venv/
+
+*.log
+
+uv.lock
